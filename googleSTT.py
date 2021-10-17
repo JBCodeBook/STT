@@ -6,72 +6,41 @@ import os
 from google.cloud import speech_v1p1beta1 as speech
 
 
-# google authentication
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'YOUR PATH HERE'
+"""Google Cloud Speech-to-Text sample application using the gRPC for async
+batch processing.
+"""
 
-# wget -nc https://realenglishconversations.com/...
 
-# instantiate a speech client and declare an audio file
-client = speech.SpeechClient()
-speech_file = 'Driving-English-Conversation-Sample.mp3'
+# [START speech_transcribe_async_gcs]
+def transcribe_gcs():
+    import config
+    """Asynchronously transcribes the audio file specified by the gcs_uri."""
+    from google.cloud import speech
 
-with io.open(speech_file, "rb") as audio_file:
-    content = audio_file.read()
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = config.google_json
 
-audio = speech.RecognitionAudio(content=content)
+    speech_file = config.audio_file
+    client = speech.SpeechClient()
 
-config = speech.RecognitionConfig(
-    encoding=speech.RecognitionConfig.AudioEncoding.MP3,
-    sample_rate_hertz=16000,
-    language_code="en-US",
-    enable_speaker_diarization=True,
-    diarization_speaker_count=2,
-)
+    with io.open(speech_file, "rb") as audio_file:
+        content = audio_file.read()
 
-print("Waiting for operation to complete...")
-response = client.recognize(config=config, audio=audio)
-
-result = response.results[-1]
-words_info = result.alternatives[0].words
-
-words_list = []
-# Printing out the output:
-for word_info in words_info:
-    words_list.append(
-        {
-            'word': word_info.word,
-            'speaker_tag': word_info.speaker_tag,
-            'start_time': word_info.start_time,
-            'end_time': word_info.end_time,
-        }
+    audio = speech.RecognitionAudio(content=content)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED,
+        sample_rate_hertz=16000,
+        language_code="en-US",
     )
-# print(words_list)
 
-# create a script based on the words_list
-current_speaker = words_list[0]['speaker_tag']
-current_line = []
-script = []
+    operation = client.long_running_recognize(config=config, audio=audio)
 
-for item in words_list:
-    if item['speaker_tag'] != current_speaker:
-        # speaker changed, end of line
-        script.append(
-            {
-                'speaker': current_speaker,
-                'line': current_line
-            }
-        )
-        current_line = []
-        current_speaker = item['speaker_tag']
-    else:
-        # same speaker, add to the current line
-        current_line.append(item['word'])
+    print("Waiting for operation to complete...")
+    response = operation.result(timeout=90)
 
-script.append(
-    {
-        'speaker': current_speaker,
-        'line': current_line
-    }
-)
-
-script = [print(f"Speaker {line['speaker']}: " + " ".join(line['line'])) for line in script]
+    # Each result is for a consecutive portion of the audio. Iterate through
+    # them to get the transcripts for the entire audio file.
+    for result in response.results:
+        # The first alternative is the most likely one for this portion.
+        print(u"Transcript: {}".format(result.alternatives[0].transcript))
+        print("Confidence: {}".format(result.alternatives[0].confidence))
+# [END speech_transcribe_async_gcs]

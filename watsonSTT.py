@@ -1,73 +1,67 @@
 import json
 import os
-
+import config
 from ibm_watson import SpeechToTextV1
 from ibm_watson.websocket import RecognizeCallback, AudioSource
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 import subprocess
 
-url = 'https://api.us-east.speech-to-text.watson.cloud.ibm.com/instances/452cd992-1539-4886-9e3d-6d94bd5e2e83'
+def watson_Compreess():
 
-path = 'C:\\Users\\j2017\\Documents\\Audacity\\jre_30min.flac'
+    print("Compressing files")
+    command = 'ffmpeg -i 1.wav -vn -ar 44100 -ac 2 -b:a 192k audio.mp3'
+    subprocess.call(command, shell=True)
+    command = 'ffmpeg -i audio.mp3 -f segment -segment_time 360 -c copy %03d.mp3'
+    subprocess.call(command, shell=True)
+    print("Finished Compressing files")
 
-# Setup Service
-# authenticator = IAMAuthenticator(apikey)
-# service = SpeechToTextV1(authenticator=authenticator)
-# service.set_service_url(url)
-#
-# models = service.list_models().get_result()
+def watsonStart():
+    url = config.watson_url
+    apikey = config.watson_api
+
+    path = 'C:\\Users\\j2017\\Documents\\Audacity\\New folder'
+
+    # Setup Service
+    authenticator = IAMAuthenticator(apikey)
+    service = SpeechToTextV1(authenticator=authenticator)
+    service.set_service_url(url)
+
+    models = service.list_models().get_result()
 
 
-command =  'ffmpeg -i JRE1719_MichaelShellenberger.flac -vn -ar 44100 -ac 2 -b:a 192k audio.mp3'
-subprocess.call(command, shell=True)
-command = 'ffmpeg -i audio.mp3 -f segment -segment_time 360 -c copy %03d.mp3'
-subprocess.call(command, shell=True)
 
+    files = []
+    for filename in os.listdir('.'):
+        if filename.endswith(".wav") and filename != 'audio.mp3':
+            files.append(filename)
+    files.sort()
 
-files = []
-for filename in os.listdir('.'):
-    if filename.endswith(".mp3") and filename !='audio.mps':
-        files.append(filename)
-files.sort()
+    print("Starting to process audio")
 
-# print(json.dumps(
-#     service.recognize(
-#         audio=fullPath,
-#         content_type='audio/wav',
-#         timestamps=True,
-#         word_confidence=True).get_result(),
-#     indent=2))
-#
-# with open('output.txt', 'w+') as out:
-#
-#     with open(path, 'rb') as f:
-#         res = service.recognize(audio=f, content_type='audio/wav', timestamps=True, word_confidence=True).get_result()
-#
-#         text = res= ['results'][0]['alternatives'][0]['transcript']
-#         confidence = ['results'][0]['alternatives'][0]['confidence']
-#         out.writelines(text + '\n')
+    # print(json.dumps(
+    #     service.recognize(
+    #         audio=path,
+    #         content_type='audio/flac',
+    #         timestamps=True,
+    #         word_confidence=True).get_result(),
+    #     indent=2))
 
-class MyRecognizeCallback(RecognizeCallback):
-    def __init__(self):
-        RecognizeCallback.__init__(self)
+    results = []
+    # for filename in files:
+    with open(config.audio_file, 'rb') as f:
+        print(f)
+        res = service.recognize(
+            audio=f,
+            content_type='audio/mp3',
+            interim_results=True,
+            timestamps=True,
+            speaker_labels=True
+        ).get_result()
 
-    def on_transcription(self, transcript):
-        print(transcript)
+        test = json.dumps(res, indent=1)
 
-    def on_connected(self):
-        print('Connection was successful')
+        # text = res['results'][0]['alternatives'][0]['transcript']
 
-    def on_error(self, error):
-        print('Error received: {}'.format(error))
+        with open('output.txt', 'w+')as out:
 
-    def on_inactivity_timeout(self, error):
-        print('Inactivity timeout: {}'.format(error))
-
-    def on_listening(self):
-        print('Service is listening')
-
-    def on_hypothesis(self, hypothesis):
-        print(hypothesis)
-
-    def on_data(self, data):
-        print(data)
+            out.writelines(test)
