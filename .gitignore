@@ -77,3 +77,4 @@ fabric.properties
 #individual files
 STT/config.py
 STT/audio/*
+STT/.env
