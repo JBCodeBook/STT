@@ -78,3 +78,8 @@ fabric.properties
 STT/config.py
 STT/audio/*
 STT/.env
+STT/output
+STT/transcripts
+
+./transcripts
+./audio
