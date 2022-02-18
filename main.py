@@ -1,7 +1,6 @@
 import os
-
-from dotenv import load_dotenv
 import watsonSTT
+from dotenv import load_dotenv
 
 
 def main():
@@ -10,7 +9,7 @@ def main():
     API = os.getenv("API_KEY")
     URL = os.getenv("URL")
 
-    watsonSTT.watsonStart(API, URL)
+    watsonSTT.watson_start(API, URL)
 
 if __name__ == "__main__":
     main()
