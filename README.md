@@ -29,7 +29,6 @@ Dependencies
   - audio
   - output
   - transcripts
-  - 
 
 Place audio files that are to be converted into their own directory inside ./audio so structure looks like so
 ```
