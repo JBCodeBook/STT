@@ -3,7 +3,7 @@
 # STT
 Speech to text application using Watson and Google STT
 
-![Image of Command Line Menu for Application](https://github.com/JBCodeBook/STT/Screenshot.png?raw=true)
+![Image of Command Line Menu for Application](https://github.com/JBCodeBook/STT/blob/master/Screenshot.png)
 
 This script will take audio files from a directory and send the file to IBM Watson's for processing through its 
 speech to text API First the API and URL keys are authenticated. The script searchs the ./audio file to locate any 
