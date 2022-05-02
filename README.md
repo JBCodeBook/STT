@@ -3,8 +3,6 @@
 # STT
 Speech to text application using Watson and Google STT
 
-Description
-
 This script will take audio files from a directory and send the file to IBM Watson's for processing through its 
 speech to text API First the API and URL keys are authenticated. The script searchs the ./audio file to locate any 
 folders and requests input for which folder to process. The files should be less than 100 MB or else it will be 
