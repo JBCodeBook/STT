@@ -80,6 +80,9 @@ STT/audio/*
 STT/.env
 STT/output
 STT/transcripts
+STT/temp
 
 ./transcripts
 ./audio
+
+.env

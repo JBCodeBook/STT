@@ -1,0 +1,7 @@
+{
+    "1": {
+        "speaker": 0,
+        "confidence": 0.91,
+        "transcript": "B. C. D. E. F. G. one two three four five six seven eight nine ten this is a test "
+    }
+}

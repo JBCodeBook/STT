@@ -19,6 +19,7 @@ can be copied into a web format.
 
 """
 
+testing = True
 
 def get_files():
     """ Prints out a menu to user and asks which folder they would like to process. Directory is return from
@@ -30,36 +31,55 @@ def get_files():
     """
 
     files_list = []
-    files_type = ['.wav', '.mp3', '.flac']
+
+    # Sets that will hold the files from the selected directory. Only certain file types allowed
+    files_mp3 = []
+    files_flac =  []
+    files_wav = []
+
+    #Create a dictionary that only allows certain types of files
+    filedictionary = {'.wav': files_wav, '.mp3': files_mp3, '.flac': files_flac}
+
+
+
     transcript_file = list_folders()
+    files_in_dir = os.listdir(transcript_file)
+
+    # If the file exists and its suffix is a keyin the dictionary, add it to the dictionary
+    for files in files_in_dir:
+        if os.path.splitext(files)[1] in filedictionary:
+            filedictionary[os.path.splitext(files)[1]].append(files)
+
 
     # Request input to select the format of the files to process
     while True:
         try:
-            count = 0
-            for opt in files_type:
-                print(str(count + 1) + opt)
-                count += 1
+            # Request which file types the user would like to transcribe
+            count = 1
+            file_opts = []
+            print("\nFile Types Selection\n")
+            print("\n\tWhat type of file would you like to process : \n")
 
-            select = int(input("\nWhat type of file would you like to process : \n"))
-            if len(files_type) + 1 > select > 0:
-                typeof_file = files_type[select - 1]
-                print("\nselected : ", typeof_file, '\n')
-                break
+            for dictkey in filedictionary:
+                if len(filedictionary[dictkey]) > 0:
+                    print("\t\t" + str(count) + dictkey)
+                    file_opts.append((dictkey))
+                    count += 1
+
+            # using the file_opts, return the set of files in the dictionary that match the selected suffix
+            if(not testing):
+                select = int(input("\nSelect number: "))
+                if count > select > 0:
+                    print("\n\tselected: ", file_opts[select - 1])
+                    return {file_opts[0]: filedictionary[file_opts[0]]}
+
+                else:
+                    print("Try again")
             else:
-                print("Try again")
+                return {file_opts[0]: filedictionary[file_opts[0]]}
 
         except ValueError:
             print("Value not accepted")
-
-    # Create list of files in directory selected from Menu input
-    for files in os.listdir(transcript_file):
-        if os.path.splitext(files)[1] == typeof_file:
-            f = transcript_file + '\\' + files
-            files_list.append(f)
-
-    return files_list
-
 
 def process_json():
     """ Locates the JSON file returned by API call and builds a more simplier JSON file to work with"""
@@ -83,26 +103,28 @@ def process_json():
                                               'transcript': i['alternatives'][0]['transcript']}
                     count += 1
 
-            with open('.\\transcripts\\' + f'{file}_transcript.txt', 'w') as outFile:
+            with open(os.getcwd() + '.\\intermediary_transcripts\\' + f'{file[0:-4]}_transcript.txt', 'w') as outFile:
                 json.dump(transcript_dict, outFile, indent=4)
 
-
 def print_to_html():
-    """ Converts the information fromt he new transcript file into HTML so it can be copied into a webpage"""
+    """ Converts the information from the new transcript file into HTML so it can be copied into a webpage"""
 
     prev_speaker = None
+    path_to_transcript = os.getcwd()
+    print(path_to_transcript)
 
     # Deletes any previous transcript file in order to append to a new one
-    if os.path.isfile('trasncript_HTML.txt'):
+    if os.path.isfile(path_to_transcript + 'trasncript_HTML.txt'):
         os.remove(os.path.basename('transcript_HTML.txt'))
     else:
         print("file does not exist yet")
 
     # Creates a file with speaker, timestamp and transcript enclosed with HTML <h3> and <p> tags
-    with open("transcript_HTML.txt", 'a+') as outFile:
-        for file in os.listdir('.\\transcripts\\'):
-            print("processing")
-            with open('.\\transcripts\\' + file, "r") as read_file:
+    with open(path_to_transcript + "\\finished_transcripts\\" "transcript_HTML.txt", 'a+') as outFile:
+        print("Printing finished transcript to: ", path_to_transcript + "\\finished_transcripts\\" "transcript_HTML.txt")
+        for f in os.listdir(path_to_transcript + '\\intermediary_transcripts\\'):
+            print("Writing transcript to: " + path_to_transcript + '\\intermediary_transcripts\\' + f)
+            with open(path_to_transcript + '\\intermediary_transcripts\\' + f, "r") as read_file:
                 json_obj = json.load(read_file)
 
             for key in json_obj:
@@ -154,14 +176,19 @@ def list_folders():
             print("Please select Folder\n")
 
             for i in range(0, len(result)):
-                print('[' + str((i + 1)) + ']', result[i])
+                print('\t\t[' + str((i + 1)) + ']', result[i])
 
-            select = int(input("\nWhich folder would you like to process : "))
-            if len(result) + 1 > select > 0:
-                file_name = result[select - 1]
-                break
+            if not testing:
+                select = int(input("\nWhich folder would you like to process : "))
+
+                if len(result) + 1 > select > 0:
+                    file_name = result[select - 1]
+                    break
+                else:
+                    print("Try again")
             else:
-                print("Try again")
+                file_name = result[1 - 1]
+                break
 
         except ValueError:
             print("Value not accepted")
@@ -173,7 +200,7 @@ def clean_folders():
     """ Removes any files before starting from ./output and ./transcripts """
 
     output_path = '.\\output'
-    transcript_path = '.\\transcripts'
+    transcript_path = '.\\intermediary_transcripts'
 
     if len(output_path) > 0:
         for f in os.listdir(output_path):
@@ -198,7 +225,9 @@ def watson_start(API, URL):
     clean_folders()
 
     # Creates list of files to process
-    audio_files = get_files()
+    audio_dictionary = get_files()
+    suffix, audio_files = list(audio_dictionary.items())[0]
+
 
     print("Authenticating service...")
 
@@ -216,12 +245,13 @@ def watson_start(API, URL):
         output_file = output_path + '\\' + os.path.basename(os.path.splitext(file)[0]) + ".txt"
 
         output_files.append(output_file)
+        file_basename = os.getcwd() + "\\audio\\test\\" + file_basename
         print(f"Transcribing {file_basename}")
-
-        with open(file, 'rb') as f:
+        ctype = 'audio/' + suffix[1:]
+        with open(file_basename, 'rb') as f:
             res = service.recognize(
                 audio=f,
-                content_type='audio/flac',
+                content_type=ctype,
                 timestamps=True,
                 speaker_labels=True
             ).get_result()
