@@ -19,7 +19,7 @@ can be copied into a web format.
 
 """
 
-testing = True
+testing = False
 
 def get_files():
     """ Prints out a menu to user and asks which folder they would like to process. Directory is return from
@@ -110,21 +110,20 @@ def print_to_html():
     """ Converts the information from the new transcript file into HTML so it can be copied into a webpage"""
 
     prev_speaker = None
-    path_to_transcript = os.getcwd()
-    print(path_to_transcript)
+    path_to_transcript = os.getcwd() + '\\finished_transcripts\\transcript_HTML.txt'
 
     # Deletes any previous transcript file in order to append to a new one
-    if os.path.isfile(path_to_transcript + 'trasncript_HTML.txt'):
-        os.remove(os.path.basename('transcript_HTML.txt'))
+    if os.path.isfile(path_to_transcript):
+        os.remove(path_to_transcript)
     else:
         print("file does not exist yet")
 
     # Creates a file with speaker, timestamp and transcript enclosed with HTML <h3> and <p> tags
-    with open(path_to_transcript + "\\finished_transcripts\\" "transcript_HTML.txt", 'a+') as outFile:
-        print("Printing finished transcript to: ", path_to_transcript + "\\finished_transcripts\\" "transcript_HTML.txt")
-        for f in os.listdir(path_to_transcript + '\\intermediary_transcripts\\'):
-            print("Writing transcript to: " + path_to_transcript + '\\intermediary_transcripts\\' + f)
-            with open(path_to_transcript + '\\intermediary_transcripts\\' + f, "r") as read_file:
+    with open(path_to_transcript, 'a+') as outFile:
+        print("Printing finished transcript to: ", path_to_transcript)
+        for f in os.listdir(os.getcwd() + '\\intermediary_transcripts\\'):
+            print("Writing transcript to: " + os.getcwd() + '\\intermediary_transcripts\\' + f)
+            with open(os.getcwd() + '\\intermediary_transcripts\\' + f, "r") as read_file:
                 json_obj = json.load(read_file)
 
             for key in json_obj:
